@@ -8,13 +8,16 @@ import os
 import token
 import jwt
 from datetime import datetime, timedelta
+
 import sqlite3
+
+from .config import config_by_name
 from functools import wraps
 from dotenv import load_dotenv
 
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from flask import Flask, g, jsonify, request
+from flask import Flask, g, jsonify, request, current_app
 
 DATABASE = "recipes.db"
 
@@ -28,8 +31,6 @@ def hash_password(plaintext_password: str) -> str:
 def verify_password(stored_hash: str, candidate_password: str) -> bool:
     """Return True if the candidate password matches the stored hash."""
     return check_password_hash(stored_hash, candidate_password)
-
-
 
 def token_required(view_func):
     @wraps(view_func)
@@ -45,7 +46,7 @@ def token_required(view_func):
         token = auth_header[len("Bearer "):]
 
         try:
-            claims = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+            claims = jwt.decode(token, current_app.config["JWT_SECRET"], ...)
         except jwt.InvalidTokenError:
             return jsonify({"error": "invalid or expired token"}), 401
 
@@ -58,14 +59,15 @@ def token_required(view_func):
 
 def get_db():
     if "db" not in g:
-        g.db = sqlite3.connect(DATABASE)
+        g.db = sqlite3.connect(current_app.config["DATABASE"])
         g.db.row_factory = sqlite3.Row
         g.db.execute("PRAGMA foreign_keys = ON")
     return g.db
 
-
-def create_app(config_name=None):
+def create_app(config_name="development"):
     app = Flask(__name__)
+    config_class = config_by_name[config_name]
+    app.config.from_object(config_class)
 
     @app.teardown_appcontext
     def close_db(exception):
@@ -295,7 +297,12 @@ def create_app(config_name=None):
         
         }
 
-        token = jwt.encode(payload, JWT_SECRET, algorithm="HS256")
+        token = jwt.encode(
+            payload, 
+            current_app.config["JWT_SECRET"], 
+            algorithm="HS256"
+            )
+
 
         return jsonify(
             {

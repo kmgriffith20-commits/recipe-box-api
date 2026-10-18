@@ -9,7 +9,8 @@ passwords, JSON Web Tokens, ownership rules, and middleware.
 
 ```
 python init_db.py
-python app.py
+python3 -m flask --app wsgi run --port 5001
+
 ```
 
 Requires Python 3.10+ and Flask (`pip install -r requirements.txt`).
