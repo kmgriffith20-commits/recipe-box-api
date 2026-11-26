@@ -12,8 +12,10 @@ class Config:
     DEBUG = False
     DATABASE = os.getenv("DATABASE_PATH", "recipes.db")
 
+    SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.abspath(DATABASE)
 
 class DevelopmentConfig(Config):
+    SLOW_SERVICE_BASE_URL = "http://localhost:5001"
     DEBUG = True
 
 
@@ -21,6 +23,11 @@ class TestingConfig(Config):
     DEBUG = False
     TESTING = True
     DATABASE = os.getenv("TEST_DATABASE_PATH", "recipes_test.db")
+    SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.abspath(DATABASE)
+
+class EmptyBaselineConfig(Config):
+    DATABASE = "baseline_empty.db"
+    SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.abspath(DATABASE)
 
 
 class ProductionConfig(Config):
@@ -30,5 +37,6 @@ class ProductionConfig(Config):
 config_by_name = {
     "development": DevelopmentConfig,
     "testing": TestingConfig,
+    "baseline": EmptyBaselineConfig,
     "production": ProductionConfig,
 }
